@@ -29,13 +29,13 @@ parser.add_argument('--num_view', type=int, default=300, help='View Number [defa
 parser.add_argument('--batch_size', type=int, default=1, help='Batch Size during inference [default: 1]')
 parser.add_argument('--collision_thresh', type=float, default=0.01, help='Collision Threshold in collision detection [default: 0.01]')
 parser.add_argument('--voxel_size', type=float, default=0.01, help='Voxel Size to process point clouds before collision detection [default: 0.01]')
-parser.add_argument('--num_workers', type=int, default=30, help='Number of workers used in evaluation [default: 30]')
+parser.add_argument('--num_workers', type=int, default=1, help='Number of workers used in evaluation [default: 1]')
 cfgs = parser.parse_args()
 
 # ------------------------------------------------------------------------- GLOBAL CONFIG BEG
 if not os.path.exists(cfgs.dump_dir): os.mkdir(cfgs.dump_dir)
 
-# Init datasets and dataloaders 
+# Init datasets and dataloaders
 def my_worker_init_fn(worker_id):
     np.random.seed(np.random.get_state()[1][0] + worker_id)
     pass
@@ -46,7 +46,7 @@ TEST_DATASET = GraspNetDataset(cfgs.dataset_root, valid_obj_idxs=None, grasp_lab
 print(len(TEST_DATASET))
 SCENE_LIST = TEST_DATASET.scene_list()
 TEST_DATALOADER = DataLoader(TEST_DATASET, batch_size=cfgs.batch_size, shuffle=False,
-    num_workers=4, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
+    num_workers=cfgs.num_workers, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
 print(len(TEST_DATALOADER))
 # Init the model
 net = GraspNet(input_feature_dim=0, num_view=cfgs.num_view, num_angle=12, num_depth=4,
@@ -76,7 +76,7 @@ def inference():
                         batch_data[key][i][j] = batch_data[key][i][j].to(device)
             else:
                 batch_data[key] = batch_data[key].to(device)
-        
+
         # Forward pass
         with torch.no_grad():
             end_points = net(batch_data)
