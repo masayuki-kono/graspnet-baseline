@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_root', required=True, help='Dataset root')
 parser.add_argument('--pos_ratio_thresh', type=float, default=0.8, help='Threshold of positive neighbor ratio[default: 0.8]')
 parser.add_argument('--mu_thresh', type=float, default=0.55, help='Threshold of friction coefficient[default: 0.55]')
-parser.add_argument('--num_workers', type=int, default=50, help='Worker number[default: 50]')
+parser.add_argument('--num_workers', type=int, default=1, help='Worker number[default: 1]')
 cfgs = parser.parse_args()
 
 save_path = 'tolerance'

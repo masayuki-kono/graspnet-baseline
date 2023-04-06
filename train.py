@@ -38,6 +38,7 @@ parser.add_argument('--bn_decay_step', type=int, default=2, help='Period of BN d
 parser.add_argument('--bn_decay_rate', type=float, default=0.5, help='Decay rate for BN decay [default: 0.5]')
 parser.add_argument('--lr_decay_steps', default='8,12,16', help='When to decay the learning rate (in epochs) [default: 8,12,16]')
 parser.add_argument('--lr_decay_rates', default='0.1,0.1,0.1', help='Decay rates for lr decay [default: 0.1,0.1,0.1]')
+parser.add_argument('--num_workers', type=int, default=1, help='Number of workers used in evaluation [default: 1]')
 cfgs = parser.parse_args()
 
 # ------------------------------------------------------------------------- GLOBAL CONFIG BEG
@@ -59,7 +60,7 @@ def log_string(out_str):
     LOG_FOUT.flush()
     print(out_str)
 
-# Init datasets and dataloaders 
+# Init datasets and dataloaders
 def my_worker_init_fn(worker_id):
     np.random.seed(np.random.get_state()[1][0] + worker_id)
     pass
@@ -71,9 +72,9 @@ TEST_DATASET = GraspNetDataset(cfgs.dataset_root, valid_obj_idxs, grasp_labels, 
 
 print(len(TRAIN_DATASET), len(TEST_DATASET))
 TRAIN_DATALOADER = DataLoader(TRAIN_DATASET, batch_size=cfgs.batch_size, shuffle=True,
-    num_workers=4, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
+    num_workers=cfg.num_workers, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
 TEST_DATALOADER = DataLoader(TEST_DATASET, batch_size=cfgs.batch_size, shuffle=False,
-    num_workers=4, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
+    num_workers=cfg.num_workers, worker_init_fn=my_worker_init_fn, collate_fn=collate_fn)
 print(len(TRAIN_DATALOADER), len(TEST_DATALOADER))
 # Init the model and optimzier
 net = GraspNet(input_feature_dim=0, num_view=cfgs.num_view, num_angle=12, num_depth=4,
@@ -170,7 +171,7 @@ def evaluate_one_epoch():
                         batch_data_label[key][i][j] = batch_data_label[key][i][j].to(device)
             else:
                 batch_data_label[key] = batch_data_label[key].to(device)
-        
+
         # Forward pass
         with torch.no_grad():
             end_points = net(batch_data_label)
@@ -193,7 +194,7 @@ def evaluate_one_epoch():
 
 
 def train(start_epoch):
-    global EPOCH_CNT 
+    global EPOCH_CNT
     min_loss = 1e10
     loss = 0
     for epoch in range(start_epoch, cfgs.max_epoch):
